@@ -6,5 +6,6 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/hash.dart' as quiver;
 import 'package:vector_math/vector_math_64.dart';
 
-part 'utils.dart';
+part 'math_utils.dart';
+part 'geo_utils.dart';
 part 'viewport.dart';
