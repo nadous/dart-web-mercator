@@ -41,7 +41,7 @@ Vector2 lngLatToWorld(double lng, double lat) {
   final lambda2 = lng * degrees2Radians;
   final phi2 = lat * degrees2Radians;
   final x = (TILE_SIZE * (lambda2 + pi)) / (2 * pi);
-  final y = (TILE_SIZE * (pi + log(tan(PI_4 + phi2 * 0.5)))) / (2 * pi);
+  final y = (TILE_SIZE * (pi + log(tan(PI_4 + phi2 * .5)))) / (2 * pi);
 
   return Vector2(x, y);
 }
@@ -96,8 +96,8 @@ Map<String, List> getDistanceScales(lng, lat, {highPrecision = false}) {
 }
 
 Map<String, num> getProjParameters(
-  int width,
-  int height, {
+  num width,
+  num height, {
   double altitude = DEFAULT_ALTITUDE,
   double pitch = 0,
   double nearZMultiplier = 1,

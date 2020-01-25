@@ -37,7 +37,7 @@ Vector4 transformVector(Vector4 vector, Matrix4 matrix) {
 }
 
 Matrix4 getViewMatrix({
-  int height,
+  num height,
   double pitch,
   double bearing,
   double altitude,
@@ -46,22 +46,23 @@ Matrix4 getViewMatrix({
 }) {
   scale /= height;
   final vm = Matrix4.identity()
-    ..translate(0, 0, -altitude)
-    ..rotateX(-pitch * -pitch * degrees2Radians)
+    ..translate(.0, .0, -altitude)
+    ..rotateX(-pitch * degrees2Radians)
     ..rotateZ(bearing * degrees2Radians)
     ..scale(scale, scale, scale);
 
   if (center != null) {
-    center.negate();
-    vm.translate(center);
+    final centerClone = center.clone();
+    centerClone.negate();
+    vm.translate(centerClone[0], centerClone[1], .0);
   }
 
   return vm;
 }
 
 Matrix4 getProjMatrix({
-  int width,
-  int height,
+  num width,
+  num height,
   double pitch,
   double altitude,
   double nearZMultiplier,

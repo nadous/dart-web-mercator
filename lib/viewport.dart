@@ -1,7 +1,7 @@
 part of web_mercator;
 
 class Viewport {
-  final int width, height;
+  final num width, height;
   final double lat, lng, zoom, pitch, bearing, altitude, unitsPerMeter;
   final Vector2 center;
 
@@ -9,22 +9,23 @@ class Viewport {
   Matrix4 _viewProjMatrix, _pixelProjMatrix, _pixelUnprojMatrix;
 
   Viewport({
-    @required this.width,
-    @required this.height,
-    this.lng = 0,
-    this.lat = 0,
-    this.zoom = 0,
-    this.pitch = 0,
-    this.bearing = 0,
+    @required width,
+    @required height,
+    this.lng = .0,
+    this.lat = .0,
+    this.zoom = .0,
+    this.pitch = .0,
+    this.bearing = .0,
     this.altitude = 1.5,
     double nearZMultiplier = .02,
     double farZMultiplier = 1.01,
-  })  : assert(width >= 1 && height >= 1, 'invalid viewport dimension'),
-        assert(altitude >= .75, 'invalid altitude'),
+  })  : assert(altitude >= .75, 'invalid altitude'),
+        this.width = max(1, width),
+        this.height = max(1, height),
         unitsPerMeter = getDistanceScales(lng, lat)['unitsPerMeter'][2],
         center = lngLatToWorld(lng, lat) {
     viewMatrix = getViewMatrix(
-      height: height,
+      height: this.height,
       pitch: pitch,
       bearing: bearing,
       altitude: max(.75, altitude),
@@ -33,19 +34,19 @@ class Viewport {
     );
 
     projMatrix = getProjMatrix(
-      width: width,
-      height: height,
+      width: this.width,
+      height: this.height,
       pitch: pitch,
       altitude: altitude,
       nearZMultiplier: nearZMultiplier,
       farZMultiplier: farZMultiplier,
     );
 
-    _viewProjMatrix = Matrix4.identity()..multiplied(projMatrix)..multiplied(viewMatrix);
+    _viewProjMatrix = Matrix4.identity()..multiply(projMatrix)..multiply(viewMatrix);
 
     _pixelProjMatrix = Matrix4.identity()
       ..scale(this.width * .5, -this.height * .5, 1)
-      ..translate(1, -1, 0)
+      ..translate(1.0, -1.0, .0)
       ..multiply(_viewProjMatrix);
 
     _pixelUnprojMatrix = Matrix4.inverted(_pixelProjMatrix);
@@ -58,7 +59,7 @@ class Viewport {
     double minExtent = 0,
     double maxZoom = 24,
     dynamic padding = 0,
-    List<int> offset = const [0, 0],
+    List<num> offset = const [0, 0],
   }) {
     assert(bounds.length == 4);
     assert(offset.length == 2);
@@ -105,27 +106,43 @@ class Viewport {
 
     assert(zoom.isFinite);
 
-    return Viewport(width: width, height:height, lng:centerLngLat[0], lat:centerLngLat[1], zoom:zoom);
+    return Viewport(width: width, height: height, lng: centerLngLat[0], lat: centerLngLat[1], zoom: zoom);
   }
 
   /// Project [vector] to pixel coordinates.
   Vector project(Vector vector, {bool topLeft = true}) {
     assert(vector is Vector2 || vector is Vector3);
 
-    final projPosition = projectPosition(vector);
-    final viewPosition = worldToPixels(projPosition, _pixelProjMatrix);
-    final y = topLeft ? viewPosition[1] : height - viewPosition[1];
+    final worldPosition = projectPosition(vector);
+    final coord = worldToPixels(worldPosition, _pixelProjMatrix);
+    final y = topLeft ? coord[1] : height - coord[1];
 
-    return vector is Vector2 ? Vector2(viewPosition[0], y) : Vector3(viewPosition[2], y, viewPosition[2]);
+    return vector is Vector2 ? Vector2(coord[0], y) : Vector3(coord[0], y, coord[2]);
   }
 
   ///  Unproject [xyz] coordinates onto world coordinates.
-  Vector unproject(Vector3 xyz, {bool topLeft = true, double targetZ}) {
-    final y = topLeft ? xyz[1] : height - xyz[1];
-    final worldPosition = pixelsToWorld(Vector3(xyz[0], y, xyz[2]), _pixelUnprojMatrix, targetZ: targetZ ?? targetZ * unitsPerMeter);
-    final unprojPosition = unprojectPosition(worldPosition);
+  Vector unproject(Vector xyz, {bool topLeft = true, double targetZ}) {
+    assert(xyz is Vector2 || xyz is Vector3);
 
-    if (targetZ != null) {
+    var vec, z;
+    try {
+      vec = xyz as Vector2;
+      z = double.nan;
+    } on CastError {
+      vec = xyz as Vector3;
+      z = vec[2];
+    }
+
+    final coord = pixelsToWorld(
+      Vector3(vec[0], topLeft ? vec[1] : height - vec[1], z),
+      _pixelUnprojMatrix,
+      targetZ: targetZ != null ? targetZ * unitsPerMeter : null,
+    );
+
+    final unprojPosition = unprojectPosition(coord);
+    if (vec is Vector3) {
+      return unprojPosition;
+    } else if (targetZ != null) {
       return Vector3(unprojPosition[0], unprojPosition[1], targetZ);
     } else {
       return Vector2(unprojPosition[0], unprojPosition[1]);
@@ -135,8 +152,18 @@ class Viewport {
   Vector3 projectPosition(Vector vector) {
     assert(vector is Vector2 || vector is Vector3 || vector is Vector4);
 
-    final flatVector = vector as Vector2;
-    final flatProjection = projectFlat(flatVector[0], flatVector[1]);
+    var vec;
+    try {
+      vec = vector as Vector2;
+    } on CastError {
+      try {
+        vec = vector as Vector3;
+      } on CastError {
+        vec = vector as Vector4;
+      }
+    }
+
+    final flatProjection = projectFlat(vec[0], vec[1]);
     final z = (vector is Vector3 ? vector[2] : 0) * unitsPerMeter;
 
     return Vector3(flatProjection[0], flatProjection[1], z);
@@ -145,11 +172,21 @@ class Viewport {
   Vector3 unprojectPosition(Vector vector) {
     assert(vector is Vector2 || vector is Vector3 || vector is Vector4);
 
-    final flatVector = vector as Vector2;
-    final flatUnprojection = unprojectFlat(flatVector[0], flatVector[1]);
-    final z = (vector is Vector3 ? vector[2] : 0) / unitsPerMeter;
+    var vec;
+    try {
+      vec = vector as Vector2;
+    } on CastError {
+      try {
+        vec = vector as Vector3;
+      } on CastError {
+        vec = vector as Vector4;
+      }
+    }
 
-    return Vector3(flatUnprojection[0], flatUnprojection[1], z);
+    final unprojection = unprojectFlat(vec[0], vec[1]);
+    final z = (vec is Vector3 || vec is Vector4 ? vec[2] : 0) / unitsPerMeter;
+
+    return Vector3(unprojection[0], unprojection[1], z);
   }
 
   Vector2 projectFlat(double x, double y) => lngLatToWorld(x, y);
@@ -157,16 +194,20 @@ class Viewport {
   Vector2 unprojectFlat(double x, double y) => worldToLngLat(x, y);
 
   /// Get the map center that places a given [lngLat] coordinate at screen point [pos].
-  Vector2 getMapCenterByLngLatPosition({Vector2 lngLat, Vector2 pos}) {
+  Vector2 getLocationAtPoint({Vector2 lngLat, Vector2 pos}) {
     final fromLocation = pixelsToWorld(Vector3(pos[0], pos[1], double.nan), _pixelUnprojMatrix) as Vector2;
     final toLocation = lngLatToWorld(lngLat[0], lngLat[1]);
 
-    fromLocation.negate();
+    print('fromLocation: $fromLocation, toLocation: $toLocation');
+
     final translate = toLocation.clone();
+    fromLocation.negate();
     translate.add(fromLocation);
+
     final newCenter = center.clone();
     newCenter.add(translate);
 
+    print('translate: $translate, newCenter: $newCenter');
     return worldToLngLat(newCenter[0], newCenter[1]);
   }
 
@@ -175,19 +216,4 @@ class Viewport {
 
   @override
   bool operator ==(Object other) => (other is Viewport) && (other.width == this.width && other.height == this.height && other.viewMatrix == this.viewMatrix);
-
-// /**
-//  * Returns a new viewport that fit around the given rectangle.
-//  * Only supports non-perspective mode.
-//  * @param {Array} bounds - [[lon, lat], [lon, lat]]
-//  * @param {Number} [options.padding] - The amount of padding in pixels to add to the given bounds.
-//  * @param {Array} [options.offset] - The center of the given bounds relative to the map's center,
-//  *    [x, y] measured in pixels.
-//  * @returns {Viewport}
-//  */
-// fitBounds(bounds, options = {}) {
-//   const {width, height} = this;
-//   const {longitude, latitude, zoom} = fitBounds(Object.assign({width, height, bounds}, options));
-//   return new Viewport({width, height, longitude, latitude, zoom});
-// }
 }

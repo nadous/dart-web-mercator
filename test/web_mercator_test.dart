@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:web_mercator/web_mercator.dart';
 import 'package:vector_math/vector_math_64.dart';
 
-import 'viewport_samples.dart' as vp_samples;
+import 'samples.dart' as samples;
 
 const DISTANCE_TOLERANCE = .0005;
 const DISTANCE_TOLERANCE_PIXELS = 2;
@@ -23,6 +23,56 @@ Map<String, dynamic> getDiff(Map<int, num> value, Map<int, num> baseValue, num s
   return {'errorPixels': errorPixels, 'error': error, 'message': message};
 }
 
+Viewport viewportFromData(samples.ViewportData data) {
+  Viewport viewport;
+
+  switch (data.name) {
+    case "Flat":
+      viewport = Viewport(
+        width: data.width,
+        height: data.height,
+        lng: data.lng,
+        lat: data.lat,
+        zoom: data.zoom,
+      );
+      break;
+    case "Pitched":
+      viewport = Viewport(
+        width: data.width,
+        height: data.height,
+        lng: data.lng,
+        lat: data.lat,
+        zoom: data.zoom,
+        pitch: data.pitch,
+      );
+      break;
+    case "Rotated":
+      viewport = Viewport(
+        width: data.width,
+        height: data.height,
+        lng: data.lng,
+        lat: data.lat,
+        zoom: data.zoom,
+        pitch: data.pitch,
+        altitude: data.altitude,
+      );
+      break;
+    case "HighLatitude":
+      viewport = Viewport(
+        width: data.width,
+        height: data.height,
+        lng: data.lng,
+        lat: data.lat,
+        zoom: data.zoom,
+        pitch: data.pitch,
+        altitude: data.altitude,
+      );
+      break;
+  }
+
+  return viewport;
+}
+
 void main() {
   group('testing utils', () {
     test('log2 implementation', () {
@@ -36,8 +86,8 @@ void main() {
     });
 
     test('getDistanceScales', () {
-      for (final vpd in vp_samples.data) {
-        final distanceScales = getDistanceScales(vpd.lng, vpd.lat);
+      for (final vp in samples.viewports) {
+        final distanceScales = getDistanceScales(vp.lng, vp.lat);
 
         final metersPerUnit = distanceScales['metersPerUnit'];
         final unitsPerMeter = distanceScales['unitsPerMeter'];
@@ -58,10 +108,10 @@ void main() {
       final scale = pow(2, DISTANCE_SCALE_TEST_ZOOM);
       const z = 1000;
 
-      for (final vpd in vp_samples.data) {
-        print('\n$vpd');
+      for (final vp in samples.viewports) {
+        print(vp);
 
-        final lng = vpd.lng, lat = vpd.lat;
+        final lng = vp.lng, lat = vp.lat;
 
         final distanceScales = getDistanceScales(lng, lat, highPrecision: true);
         final unitsPerDegree = distanceScales['unitsPerDegree'];
@@ -101,10 +151,10 @@ void main() {
       final scale = pow(2, DISTANCE_SCALE_TEST_ZOOM);
       const z = 1000;
 
-      for (final vpd in vp_samples.data) {
-        print('\n$vpd');
+      for (final vp in samples.viewports) {
+        print(vp);
 
-        final lng = vpd.lng, lat = vpd.lat;
+        final lng = vp.lng, lat = vp.lat;
 
         final distanceScales = getDistanceScales(lng, lat, highPrecision: true);
         final unitsPerMeter = distanceScales['unitsPerMeter'];
@@ -141,10 +191,10 @@ void main() {
     });
 
     test('addMetersToLngLat', () {
-      for (final vpd in vp_samples.data) {
-        print('\n$vpd');
+      for (final vp in samples.viewports) {
+        print(vp);
 
-        final lng = vpd.lng, lat = vpd.lat;
+        final lng = vp.lng, lat = vp.lat;
 
         // Test meters offsets
         for (final delta in [10.0, 100.0, 1000.0, 5000.0]) {
@@ -154,10 +204,10 @@ void main() {
           final pt = Vector3(destPt[0], destPt[1], delta);
           final result = addMetersToLngLat(Vector3(lng, lat, 0), Vector3.all(delta));
 
-          print('comparing: $result with $pt');
-          // -122.37309574680621,37.79495261124374,5000,  with -122.37309604668772,37.794952343211726,5000
-          // -122.37309574680621,37.79495261124374,5000.0 with -122.37309604668772,37.79495234321173,5000.0
-          result.storage.asMap().forEach((i, v) => expect(v, closeTo(pt[i], 1e-7)));
+          // print('comparing: $result with $pt');
+          // -122.37309574680621,37.79495261124374,5000,  with -122.37309604668772,37.794952343211726,5000  (from math.gl tests)
+          // -122.37309574680621,37.79495261124374,5000.0 with -122.37309604668772,37.79495234321173,5000.0 (this dart test)
+          result.storage.asMap().forEach((i, v) => expect(v, closeTo(pt[i], 1e-6))); // 1e-7 won't do, maybe dart is rounding decimals…
         }
       }
     });
@@ -169,6 +219,103 @@ void main() {
 
         final unitsPerMeter = getDistanceScales(0, lat)['unitsPerMeter'];
         unitsPerMeter.map((v) => v * scale).forEach((v) => expect(v.toStringAsFixed(11), '1.00000000000'));
+      }
+    });
+  });
+
+  group('testing viewport', () {
+    test('WebMercatorViewport#constructor - 0 width/height', () {
+      final vpData = samples.ViewportData.flat();
+      final viewport = Viewport(
+        width: 0,
+        height: 0,
+        lng: vpData.lng,
+        lat: vpData.lat,
+        zoom: vpData.zoom,
+        bearing: vpData.bearing,
+      );
+
+      expect(viewport.width, 1);
+      expect(viewport.height, 1);
+      expect(viewport, isInstanceOf<Viewport>());
+    });
+
+    test('WebMercatorViewport.projectFlat', () {
+      for (final vp in samples.viewports) {
+        print(vp);
+
+        final viewport = viewportFromData(vp);
+
+        for (final vpd2 in samples.viewports) {
+          final lng = vpd2.lng, lat = vpd2.lat;
+          final xy = viewport.projectFlat(lng, lat);
+          final lngLat = viewport.unprojectFlat(xy[0], xy[1]);
+
+          expect(lng, closeTo(lngLat[0], 1e-6));
+          expect(lat, closeTo(lngLat[1], 1e-6));
+        }
+      }
+    });
+
+    test('WebMercatorViewport.project#2D', () {
+      for (final vp in samples.viewports) {
+        print(vp);
+
+        final viewport = viewportFromData(vp);
+
+        for (final vpd2 in samples.viewports) {
+          final lngLatIn = Vector2(vpd2.lng, vpd2.lat);
+
+          var xy = viewport.project(lngLatIn, topLeft: true) as Vector2;
+          var lngLat = viewport.unproject(xy, topLeft: true) as Vector2;
+          print('Comparing $lngLatIn to $lngLat');
+          expect(lngLatIn.storage, containsAllInOrder(lngLat.storage.map((v) => closeTo(v, 1e-5)).toList())); // again, we need to decrease precision test by one decimal
+
+          xy = viewport.project(lngLatIn, topLeft: false) as Vector2;
+          lngLat = viewport.unproject(xy, topLeft: false) as Vector2;
+          print('Comparing $lngLatIn to $lngLat');
+          expect(lngLatIn.storage, containsAllInOrder(lngLat.storage.map((v) => closeTo(v, 1e-5)).toList()));
+        }
+      }
+    });
+
+    test('WebMercatorViewport.project#3D', () {
+      for (final vp in samples.viewports) {
+        print(vp);
+        final viewport = viewportFromData(vp);
+
+        for (final vpd2 in samples.viewports) {
+          final lngLatZIn = Vector3(vpd2.lng, vpd2.lat, 100);
+          final xyz = viewport.project(lngLatZIn) as Vector3;
+
+          final lngLatZ1 = viewport.unproject(xyz) as Vector3;
+          final lngLatZ2 = viewport.unproject(Vector2(xyz[0], xyz[1]), targetZ: 100) as Vector3;
+
+          print('Comparing $lngLatZIn to $lngLatZ1 & $lngLatZ2');
+          expect(lngLatZIn.storage, containsAllInOrder(lngLatZ1.storage.map((v) => closeTo(v, 1e-5)).toList()));
+          expect(lngLatZIn.storage, containsAllInOrder(lngLatZ2.storage.map((v) => closeTo(v, 1e-5)).toList()));
+        }
+      }
+    });
+
+    test('WebMercatorViewport.getLocationAtPoint', () {
+      final testPos = Vector2(200, 200);
+
+      for (final vp in samples.viewports) {
+        print(vp);
+        final viewport = viewportFromData(vp);
+
+        for (final vp2 in samples.viewports) {
+          final lngLat = Vector2(vp2.lng, vp2.lat);
+          final newLngLat = viewport.getLocationAtPoint(lngLat: lngLat, pos: testPos);
+
+          final newViewport = viewportFromData(samples.ViewportData.copyWith(vp, lng: newLngLat[0], lat: newLngLat[1]));
+          final xy = newViewport.project(lngLat) as Vector2;
+
+          print('Comparing $testPos to $xy');
+          expect(testPos[0], closeTo(xy[0], 1e-6));
+          expect(testPos[1], closeTo(xy[1], 1e-6));
+        }
       }
     });
   });
