@@ -27,7 +27,7 @@ Viewport viewportFromData(samples.ViewportData data) {
   Viewport viewport;
 
   switch (data.name) {
-    case "Flat":
+    case 'Flat':
       viewport = Viewport(
         width: data.width,
         height: data.height,
@@ -36,7 +36,7 @@ Viewport viewportFromData(samples.ViewportData data) {
         zoom: data.zoom,
       );
       break;
-    case "Pitched":
+    case 'Pitched':
       viewport = Viewport(
         width: data.width,
         height: data.height,
@@ -46,7 +46,7 @@ Viewport viewportFromData(samples.ViewportData data) {
         pitch: data.pitch,
       );
       break;
-    case "Rotated":
+    case 'Rotated':
       viewport = Viewport(
         width: data.width,
         height: data.height,
@@ -57,7 +57,7 @@ Viewport viewportFromData(samples.ViewportData data) {
         altitude: data.altitude,
       );
       break;
-    case "HighLatitude":
+    case 'HighLatitude':
       viewport = Viewport(
         width: data.width,
         height: data.height,
@@ -94,13 +94,13 @@ void main() {
         final degreesPerUnit = distanceScales['degreesPerUnit'];
         final unitsPerDegree = distanceScales['unitsPerDegree'];
 
-        expect((metersPerUnit[0] * unitsPerMeter[0]).toStringAsFixed(11), '1.00000000000');
-        expect((metersPerUnit[1] * unitsPerMeter[1]).toStringAsFixed(11), '1.00000000000');
-        expect((metersPerUnit[2] * unitsPerMeter[2]).toStringAsFixed(11), '1.00000000000');
+        expect(metersPerUnit[0] * unitsPerMeter[0], closeTo(1, 1e-11));
+        expect(metersPerUnit[1] * unitsPerMeter[1], closeTo(1, 1e-11));
+        expect(metersPerUnit[2] * unitsPerMeter[2], closeTo(1, 1e-11));
 
-        expect((degreesPerUnit[0] * unitsPerDegree[0]).toStringAsFixed(11), '1.00000000000');
-        expect((degreesPerUnit[1] * unitsPerDegree[1]).toStringAsFixed(11), '1.00000000000');
-        expect((degreesPerUnit[2] * unitsPerDegree[2]).toStringAsFixed(11), '1.00000000000');
+        expect(degreesPerUnit[0] * unitsPerDegree[0], closeTo(1, 1e-11));
+        expect(degreesPerUnit[1] * unitsPerDegree[1], closeTo(1, 1e-11));
+        expect(degreesPerUnit[2] * unitsPerDegree[2], closeTo(1, 1e-11));
       }
     });
 
@@ -110,7 +110,6 @@ void main() {
 
       for (final vp in samples.viewports) {
         print(vp);
-
         final lng = vp.lng, lat = vp.lat;
 
         final distanceScales = getDistanceScales(lng, lat, highPrecision: true);
@@ -317,6 +316,62 @@ void main() {
           expect(testPos[1], closeTo(xy[1], 1e-6));
         }
       }
+    });
+  });
+
+  group('testing fitBounds', () {
+    test('fitBounds', () {
+      for (final bound in samples.bounds) {
+        final input = bound[0], expected = bound[1];
+        final result = fitBounds(
+            width: input['width'],
+            height: input['height'],
+            bounds: input['bounds'][0]..addAll(input['bounds'][1]),
+            minExtent: input['minExtent'] ?? 0,
+            maxZoom: input['maxZoom'] ?? 24,
+            padding: input['padding'] ?? 0,
+            offset: input['offset'] ?? [0, 0]);
+
+        ['lng', 'lat', 'zoom'].map((k) {
+          expect(result[k].isFinite, true);
+          expect(result[k], closeTo(expected[k], 1e-11));
+        });
+      }
+    });
+
+    test('WebMercatorViewport.fitBounds', () {
+      for (final bound in samples.bounds) {
+        final input = bound[0], expected = bound[1];
+        final result = Viewport.fitBounds(
+            width: input['width'],
+            height: input['height'],
+            bounds: input['bounds'][0]..addAll(input['bounds'][1]),
+            minExtent: input['minExtent'] ?? 0,
+            maxZoom: input['maxZoom'] ?? 24,
+            padding: input['padding'] ?? 0,
+            offset: input['offset'] ?? [0, 0]);
+
+        expect(result, isInstanceOf<Viewport>());
+
+        expect(result.lng, closeTo(expected['lng'], 1e-9));
+        expect(result.lat, closeTo(expected['lat'], 1e-9));
+        expect(result.zoom, closeTo(expected['zoom'], 1e-9));
+      }
+    });
+
+    test('fitBounds#degenerate', () {
+      expect(
+        Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0]),
+        isInstanceOf<Viewport>(),
+      );
+      expect(
+        () => Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], maxZoom: double.infinity),
+        throwsAssertionError,
+      );
+      expect(
+        Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], minExtent: .01, maxZoom: double.infinity),
+        isInstanceOf<Viewport>(),
+      );
     });
   });
 }
