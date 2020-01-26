@@ -4,9 +4,12 @@ Dart implementation of the uber [@math.gl/web-mercator](https://github.com/uber-
 
 ## Getting Started
 
+See the `tests` for in-depth implementation methods.
 Here is a basic example using the `fitBounds` factory with end user device informations:
 ```dart
 import 'package:web_mercator/viewport.dart';
 
-final viewport = Viewport.fitBounds(width: screenWidth, height: screenHeight, lat: )
+final viewport = Viewport.fitBounds(width: deviceWidth, height: deviceHeight, bounds: northEastSoutWest);
 ```
+
+With that viewport, you can use the project 
