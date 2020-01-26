@@ -12,4 +12,4 @@ import 'package:web_mercator/viewport.dart';
 final viewport = Viewport.fitBounds(width: deviceWidth, height: deviceHeight, bounds: northEastSoutWest);
 ```
 
-With that viewport, you can use the project 
+With that viewport, you can now project coordinates.
