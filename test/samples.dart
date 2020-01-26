@@ -110,3 +110,30 @@ dynamic get bounds => [
         {'lng': -23.406499999999973, 'lat': 64.870857602, 'zoom': 12.476957831}
       ]
     ];
+
+List<Map> get projections => [
+      {
+        'title': 'project (center)',
+        'func': 'project',
+        'input': [-122.43, 37.75],
+        'expected': [400, 300]
+      },
+      {
+        'title': 'unproject (center)',
+        'func': 'unproject',
+        'input': [400.0, 300.0],
+        'expected': [-122.43, 37.75]
+      },
+      {
+        'title': 'project (corner)',
+        'func': 'project',
+        'input': [-122.55, 37.83],
+        'expected': [-1.329741801625046, 6.796120915775314]
+      },
+      {
+        'title': 'unproject (corner)',
+        'func': 'unproject',
+        'input': [.0, .0],
+        'expected': [-122.55024809579456, 37.832294933238586]
+      }
+    ];

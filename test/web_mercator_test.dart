@@ -319,6 +319,56 @@ void main() {
     });
   });
 
+  group('testing mercator projections', () {
+    const viewportProps = {'width': 800.0, 'height': 600.0, 'lng': -122.43, 'lat': 37.75, 'zoom': 11.5, 'pitch': 30.0, 'bearing': .0};
+    test('Viewport projection', () {
+      final viewport = Viewport(
+          width: viewportProps['width'],
+          height: viewportProps['height'],
+          lat: viewportProps['lat'],
+          lng: viewportProps['lng'],
+          zoom: viewportProps['zoom'],
+          pitch: viewportProps['pitch'],
+          bearing: viewportProps['bearing']);
+
+      for (final proj in samples.projections) {
+        print(proj['title']);
+        Vector2 output;
+        switch (proj['func']) {
+          case 'project':
+            output = viewport.project(Vector2(proj['input'][0], proj['input'][1]));
+            break;
+          case 'unproject':
+            output = viewport.unproject(Vector2(proj['input'][0], proj['input'][1]));
+            break;
+        }
+        expect(output.storage, containsAllInOrder(proj['expected'].map((v) => closeTo(v, 1e-7))));
+      }
+    });
+
+    test('Viewport projection#topLeft', () {
+      final viewport = Viewport(
+          width: viewportProps['width'],
+          height: viewportProps['height'],
+          lat: viewportProps['lat'],
+          lng: viewportProps['lng'],
+          zoom: viewportProps['zoom'],
+          pitch: viewportProps['pitch'],
+          bearing: viewportProps['bearing']);
+
+      final topLeft = viewport.unproject(Vector2.zero()) as Vector2;
+      final bottomLeft = viewport.unproject(Vector2(0, viewport.height)) as Vector2;
+
+      expect(bottomLeft[1], lessThan(topLeft[1]));
+
+      final topLeft2 = viewport.unproject(Vector2(0, viewport.height), topLeft: false) as Vector2;
+      final bottomLeft2 = viewport.unproject(Vector2.zero(), topLeft: false) as Vector2;
+
+      topLeft.storage.asMap().forEach((i, v) => expect(v, topLeft2[i])); //, topLeft2, 'topLeft true/false match');
+      bottomLeft.storage.asMap().forEach((i, v) => expect(v, bottomLeft2[i]));
+    });
+  });
+
   group('testing fitBounds', () {
     test('fitBounds', () {
       for (final bound in samples.bounds) {
