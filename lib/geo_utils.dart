@@ -95,6 +95,7 @@ Map<String, List> getDistanceScales(lng, lat, {highPrecision = false}) {
   return result;
 }
 
+/// Calculates camera projection for
 Map<String, num> getProjParameters(
   num width,
   num height, {
@@ -118,6 +119,64 @@ Map<String, num> getProjParameters(
     'near': nearZMultiplier,
     'far': farZ * farZMultiplier,
   };
+}
+
+/// Returns map settings {lng, lat, zoom} containing the provided [bounds] within the provided [width] & [height].
+/// Only supports non-perspective mode.
+Map<String, num> fitBounds({
+  @required num width,
+  @required num height,
+  @required List<num> bounds,
+  double minExtent = 0,
+  double maxZoom = 24,
+  dynamic padding = 0,
+  List<num> offset = const [0, 0],
+}) {
+  assert(bounds.length == 4);
+  assert(offset.length == 2);
+
+  final west = bounds[0], south = bounds[1], east = bounds[2], north = bounds[3];
+
+  if (padding is int) {
+    final p = padding;
+    padding = {'top': p, 'right': p, 'bottom': p, 'left': p};
+  } else {
+    assert(padding is Map<String, num>);
+    assert(padding['top'] is num && padding['right'] is num && padding['bottom'] is num && padding['left'] is num);
+  }
+
+  final viewport = Viewport(width: width, height: height);
+
+  final nw = viewport.project(Vector2(west, north)) as Vector2;
+  final se = viewport.project(Vector2(east, south)) as Vector2;
+
+  /// width/height on the Web Mercator plane
+  final size = <num>[
+    max((se[0] - nw[0]).abs(), minExtent),
+    max((se[1] - nw[1]).abs(), minExtent),
+  ];
+
+  final targetSize = <num>[
+    width - padding['left'] - padding['right'] - offset[0].abs() * 2,
+    height - padding['top'] - padding['bottom'] - offset[1].abs() * 2,
+  ];
+
+  assert(targetSize[0] > 0 && targetSize[1] > 0);
+
+  /// scale = screen pixels per unit on the Web Mercator plane
+  final scaleX = targetSize[0] / size[0];
+  final scaleY = targetSize[1] / size[1];
+
+  /// Find how much we need to shift the center
+  final offsetX = (padding['right'] - padding['left']) * .5 / scaleX;
+  final offsetY = (padding['bottom'] - padding['top']) * .5 / scaleY;
+
+  final center = Vector3((se[0] + nw[0]) * .5 + offsetX, (se[1] + nw[1]) * .5 + offsetY, double.nan);
+  final centerLngLat = viewport.unproject(center) as Vector3;
+  final zoom = min(maxZoom, viewport.zoom + log2(min(scaleX, scaleY)).abs());
+
+  assert(zoom.isFinite);
+  return {'lng': centerLngLat[0], 'lat': centerLngLat[1], 'zoom': zoom};
 }
 
 /// Offset a [lngLatZ] position by meterOffset (northing, easting) [xyz].
