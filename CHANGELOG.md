@@ -9,3 +9,7 @@
 ## [0.9.1] - 2020/01/26
 
 * Passing relevant attributes of package scoring.
+
+## [0.9.2] - 2020/01/30
+
+* Add a `bbox` function to facilitate projection from a list of coordinates.

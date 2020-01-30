@@ -222,6 +222,52 @@ void main() {
     });
   });
 
+  group('testing bbox', () {
+    test('throw assertion error when coordinates is null', () {
+      expect(() => bbox(null), throwsAssertionError);
+    });
+    test('return an infinte bounding box when coordinates are empty', () {
+      expect(bbox([]), containsAllInOrder([double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity]));
+    });
+
+    test('bbox#point', () {
+      const pt = [102.0, 0.5];
+      expect(bbox([pt]), containsAllInOrder([102, 0.5, 102, 0.5]));
+    });
+
+    test('bbox#line', () {
+      const line = [
+        [102.0, -10.0],
+        [103.0, 1.0],
+        [104.0, 0.0],
+        [130.0, 4.0]
+      ];
+      expect(bbox(line), containsAllInOrder([102, -10, 130, 4]));
+    });
+
+    test('bbox#many', () {
+      const many = [
+        [102.0, 2.0],
+        [103.0, 2.0],
+        [103.0, 3.0],
+        [102.0, 3.0],
+        [102.0, 2.0],
+        [100.0, 0.0],
+        [101.0, 0.0],
+        [101.0, 1.0],
+        [100.0, 1.0],
+        [100.0, 0.0],
+        [100.2, 0.2],
+        [100.8, 0.2],
+        [100.8, 0.8],
+        [100.2, 0.8],
+        [100.2, 0.2]
+      ];
+
+       expect(bbox(many), containsAllInOrder([100, 0, 103, 3]));
+    });
+  });
+
   group('testing viewport', () {
     test('WebMercatorViewport#constructor - 0 width/height', () {
       final vpData = samples.ViewportData.flat();

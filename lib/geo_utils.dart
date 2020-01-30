@@ -33,6 +33,30 @@ Vector2 destination(double lng, double lat, {@required num distance, num bearing
   return Vector2(lng2 * radians2Degrees, lat2 * radians2Degrees);
 }
 
+/// Takes a list of [coordinates] and returns a bounding box enclosing them (in [minX, minY, maxX, maxY] order).
+/// see: [https://github.com/Turfjs/turf/blob/master/packages/turf-bbox/index.ts](turf/bbox)
+List<double> bbox(List<List<double>> coordinates) {
+  assert(coordinates != null);
+  List<double> result = [double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity];
+
+  for (final coord in coordinates) {
+    if (result[0] > coord[0]) {
+      result[0] = coord[0];
+    }
+    if (result[1] > coord[1]) {
+      result[1] = coord[1];
+    }
+    if (result[2] < coord[0]) {
+      result[2] = coord[0];
+    }
+    if (result[3] < coord[1]) {
+      result[3] = coord[1];
+    }
+  }
+
+  return result;
+}
+
 /// Project [lng, lat] on sphere on 512*512 Mercator Zoom 0 tile.
 Vector2 lngLatToWorld(double lng, double lat) {
   assert(lng.isFinite);
