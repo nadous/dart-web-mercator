@@ -10,7 +10,7 @@ const DISTANCE_TOLERANCE = .0005;
 const DISTANCE_TOLERANCE_PIXELS = 2;
 const DISTANCE_SCALE_TEST_ZOOM = 12;
 
-Map<String, dynamic> getDiff(Map<int, num> value, Map<int, num> baseValue, num scale) {
+dynamic getDiff(Map<int, num> value, Map<int, num> baseValue, num scale) {
   final errorPixels = value.map((i, v) => MapEntry(i, ((v - baseValue[i]) * scale).abs()));
   final error = value.map((i, v) => (MapEntry(i, (v - baseValue[i]).abs() / min(v.abs(), baseValue[i].abs()))));
 
@@ -23,12 +23,12 @@ Map<String, dynamic> getDiff(Map<int, num> value, Map<int, num> baseValue, num s
   return {'errorPixels': errorPixels, 'error': error, 'message': message};
 }
 
-Viewport viewportFromData(samples.ViewportData data) {
-  Viewport viewport;
+MercatorViewport viewportFromData(samples.ViewportData data) {
+  MercatorViewport viewport;
 
   switch (data.name) {
     case 'Flat':
-      viewport = Viewport(
+      viewport = MercatorViewport(
         width: data.width,
         height: data.height,
         lng: data.lng,
@@ -37,7 +37,7 @@ Viewport viewportFromData(samples.ViewportData data) {
       );
       break;
     case 'Pitched':
-      viewport = Viewport(
+      viewport = MercatorViewport(
         width: data.width,
         height: data.height,
         lng: data.lng,
@@ -47,7 +47,7 @@ Viewport viewportFromData(samples.ViewportData data) {
       );
       break;
     case 'Rotated':
-      viewport = Viewport(
+      viewport = MercatorViewport(
         width: data.width,
         height: data.height,
         lng: data.lng,
@@ -58,7 +58,7 @@ Viewport viewportFromData(samples.ViewportData data) {
       );
       break;
     case 'HighLatitude':
-      viewport = Viewport(
+      viewport = MercatorViewport(
         width: data.width,
         height: data.height,
         lng: data.lng,
@@ -135,13 +135,13 @@ void main() {
             z * getDistanceScales(pt[0], pt[1])['unitsPerMeter'][2],
           ];
 
-          final diff = getDiff(coords.asMap(), realCoords.asMap(), scale);
-          final diffAdjusted = getDiff(coordsAdjusted.asMap(), realCoords.asMap(), scale);
+          final dynamic diff = getDiff(coords.asMap(), realCoords.asMap(), scale);
+          final dynamic diffAdjusted = getDiff(coordsAdjusted.asMap(), realCoords.asMap(), scale);
 
           print('  unadjusted ${diff['message']}\n  adjusted ${diffAdjusted['message']}');
 
-          diffAdjusted['error'].values.forEach((v) => expect(v, lessThan(DISTANCE_TOLERANCE)));
-          diffAdjusted['errorPixels'].values.forEach((v) => expect(v, lessThan(DISTANCE_TOLERANCE_PIXELS)));
+          diffAdjusted['error'].values.forEach((num v) => expect(v, lessThan(DISTANCE_TOLERANCE)));
+          diffAdjusted['errorPixels'].values.forEach((num v) => expect(v, lessThan(DISTANCE_TOLERANCE_PIXELS)));
         }
       }
     });
@@ -178,13 +178,13 @@ void main() {
             z * getDistanceScales(pt[0], pt[1])['unitsPerMeter'][2]
           ];
 
-          final diff = getDiff(coords.asMap(), realCoords.asMap(), scale);
-          final diffAdjusted = getDiff(coordsAdjusted.asMap(), realCoords.asMap(), scale);
+          final dynamic diff = getDiff(coords.asMap(), realCoords.asMap(), scale);
+          final dynamic diffAdjusted = getDiff(coordsAdjusted.asMap(), realCoords.asMap(), scale);
 
           print('  unadjusted ${diff['message']}\n  adjusted ${diffAdjusted['message']}');
 
-          diffAdjusted['error'].values.forEach((v) => expect(v, lessThan(DISTANCE_TOLERANCE)));
-          diffAdjusted['errorPixels'].values.forEach((v) => expect(v, lessThan(DISTANCE_TOLERANCE_PIXELS)));
+          diffAdjusted['error'].values.forEach((num v) => expect(v, lessThan(DISTANCE_TOLERANCE)));
+          diffAdjusted['errorPixels'].values.forEach((num v) => expect(v, lessThan(DISTANCE_TOLERANCE_PIXELS)));
         }
       }
     });
@@ -217,7 +217,7 @@ void main() {
         final scale = zoomToScale(zoom);
 
         final unitsPerMeter = getDistanceScales(0, lat)['unitsPerMeter'];
-        unitsPerMeter.map((v) => v * scale).forEach((v) => expect(v.toStringAsFixed(11), '1.00000000000'));
+        unitsPerMeter.map((dynamic v) => (v as num) * scale).forEach((num v) => expect(v, closeTo(1, 1e-11)));
       }
     });
   });
@@ -227,12 +227,12 @@ void main() {
       expect(() => bbox(null), throwsAssertionError);
     });
     test('return an infinte bounding box when coordinates are empty', () {
-      expect(bbox([]), containsAllInOrder([double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity]));
+      expect(bbox([]), containsAllInOrder(<double>[double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity]));
     });
 
     test('bbox#point', () {
       const pt = [102.0, 0.5];
-      expect(bbox([pt]), containsAllInOrder([102, 0.5, 102, 0.5]));
+      expect(bbox([pt]), containsAllInOrder(<num>[102, 0.5, 102, 0.5]));
     });
 
     test('bbox#line', () {
@@ -242,7 +242,7 @@ void main() {
         [104.0, 0.0],
         [130.0, 4.0]
       ];
-      expect(bbox(line), containsAllInOrder([102, -10, 130, 4]));
+      expect(bbox(line), containsAllInOrder(<num>[102, -10, 130, 4]));
     });
 
     test('bbox#many', () {
@@ -264,14 +264,14 @@ void main() {
         [100.2, 0.2]
       ];
 
-       expect(bbox(many), containsAllInOrder([100, 0, 103, 3]));
+      expect(bbox(many), containsAllInOrder(<num>[100, 0, 103, 3]));
     });
   });
 
   group('testing viewport', () {
-    test('WebMercatorViewport#constructor - 0 width/height', () {
+    test('WebMercatorMercatorViewport#constructor - 0 width/height', () {
       final vpData = samples.ViewportData.flat();
-      final viewport = Viewport(
+      final viewport = MercatorViewport(
         width: 0,
         height: 0,
         lng: vpData.lng,
@@ -282,10 +282,10 @@ void main() {
 
       expect(viewport.width, 1);
       expect(viewport.height, 1);
-      expect(viewport, isInstanceOf<Viewport>());
+      expect(viewport, isInstanceOf<MercatorViewport>());
     });
 
-    test('WebMercatorViewport.projectFlat', () {
+    test('WebMercatorMercatorViewport.projectFlat', () {
       for (final vp in samples.viewports) {
         print(vp);
 
@@ -302,7 +302,7 @@ void main() {
       }
     });
 
-    test('WebMercatorViewport.project#2D', () {
+    test('WebMercatorMercatorViewport.project#2D', () {
       for (final vp in samples.viewports) {
         print(vp);
 
@@ -324,7 +324,7 @@ void main() {
       }
     });
 
-    test('WebMercatorViewport.project#3D', () {
+    test('WebMercatorMercatorViewport.project#3D', () {
       for (final vp in samples.viewports) {
         print(vp);
         final viewport = viewportFromData(vp);
@@ -343,7 +343,7 @@ void main() {
       }
     });
 
-    test('WebMercatorViewport.getLocationAtPoint', () {
+    test('WebMercatorMercatorViewport.getLocationAtPoint', () {
       final testPos = Vector2(200, 200);
 
       for (final vp in samples.viewports) {
@@ -354,8 +354,8 @@ void main() {
           final lngLat = Vector2(vp2.lng, vp2.lat);
           final newLngLat = viewport.getLocationAtPoint(lngLat: lngLat, pos: testPos);
 
-          final newViewport = viewportFromData(samples.ViewportData.copyWith(vp, lng: newLngLat[0], lat: newLngLat[1]));
-          final xy = newViewport.project(lngLat) as Vector2;
+          final newMercatorViewport = viewportFromData(samples.ViewportData.copyWith(vp, lng: newLngLat[0], lat: newLngLat[1]));
+          final xy = newMercatorViewport.project(lngLat) as Vector2;
 
           print('Comparing $testPos to $xy');
           expect(testPos[0], closeTo(xy[0], 1e-6));
@@ -367,8 +367,8 @@ void main() {
 
   group('testing mercator projections', () {
     const viewportProps = {'width': 800.0, 'height': 600.0, 'lng': -122.43, 'lat': 37.75, 'zoom': 11.5, 'pitch': 30.0, 'bearing': .0};
-    test('Viewport projection', () {
-      final viewport = Viewport(
+    test('MercatorViewport projection', () {
+      final viewport = MercatorViewport(
           width: viewportProps['width'],
           height: viewportProps['height'],
           lat: viewportProps['lat'],
@@ -388,12 +388,12 @@ void main() {
             output = viewport.unproject(Vector2(proj['input'][0], proj['input'][1]));
             break;
         }
-        expect(output.storage, containsAllInOrder(proj['expected'].map((v) => closeTo(v, 1e-7))));
+        expect(output.storage, containsAllInOrder(proj['expected'].map((num v) => closeTo(v, 1e-7))));
       }
     });
 
-    test('Viewport projection#topLeft', () {
-      final viewport = Viewport(
+    test('MercatorViewport projection#topLeft', () {
+      final viewport = MercatorViewport(
           width: viewportProps['width'],
           height: viewportProps['height'],
           lat: viewportProps['lat'],
@@ -418,7 +418,7 @@ void main() {
   group('testing fitBounds', () {
     test('fitBounds', () {
       for (final bound in samples.bounds) {
-        final input = bound[0], expected = bound[1];
+        final Map input = bound[0], expected = bound[1];
         final result = fitBounds(
             width: input['width'],
             height: input['height'],
@@ -435,10 +435,10 @@ void main() {
       }
     });
 
-    test('WebMercatorViewport.fitBounds', () {
+    test('WebMercatorMercatorViewport.fitBounds', () {
       for (final bound in samples.bounds) {
-        final input = bound[0], expected = bound[1];
-        final result = Viewport.fitBounds(
+        final Map input = bound[0], expected = bound[1];
+        final result = MercatorViewport.fitBounds(
             width: input['width'],
             height: input['height'],
             bounds: input['bounds'][0]..addAll(input['bounds'][1]),
@@ -447,7 +447,7 @@ void main() {
             padding: input['padding'] ?? 0,
             offset: input['offset'] ?? [0, 0]);
 
-        expect(result, isInstanceOf<Viewport>());
+        expect(result, isInstanceOf<MercatorViewport>());
 
         expect(result.lng, closeTo(expected['lng'], 1e-9));
         expect(result.lat, closeTo(expected['lat'], 1e-9));
@@ -457,16 +457,16 @@ void main() {
 
     test('fitBounds#degenerate', () {
       expect(
-        Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0]),
-        isInstanceOf<Viewport>(),
+        MercatorViewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0]),
+        isInstanceOf<MercatorViewport>(),
       );
       expect(
-        () => Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], maxZoom: double.infinity),
+        () => MercatorViewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], maxZoom: double.infinity),
         throwsAssertionError,
       );
       expect(
-        Viewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], minExtent: .01, maxZoom: double.infinity),
-        isInstanceOf<Viewport>(),
+        MercatorViewport.fitBounds(width: 100, height: 100, bounds: [-70.0, 10.0, -70.0, 10.0], minExtent: .01, maxZoom: double.infinity),
+        isInstanceOf<MercatorViewport>(),
       );
     });
   });

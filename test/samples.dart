@@ -111,7 +111,7 @@ dynamic get bounds => [
       ]
     ];
 
-List<Map> get projections => [
+dynamic get projections => [
       {
         'title': 'project (center)',
         'func': 'project',

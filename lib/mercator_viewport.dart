@@ -1,6 +1,6 @@
 part of web_mercator;
 
-class Viewport {
+class MercatorViewport {
   final num width, height;
   final double lat, lng, zoom, pitch, bearing, altitude, unitsPerMeter;
   final Vector2 center;
@@ -8,9 +8,9 @@ class Viewport {
   Matrix4 viewMatrix, projMatrix;
   Matrix4 _viewProjMatrix, _pixelProjMatrix, _pixelUnprojMatrix;
 
-  Viewport({
-    @required width,
-    @required height,
+  MercatorViewport({
+    @required num width,
+    @required num height,
     this.lng = .0,
     this.lat = .0,
     this.zoom = .0,
@@ -53,9 +53,9 @@ class Viewport {
   }
 
   /// Returns a new viewport that fit around the given rectangle.
-  factory Viewport.fitBounds({
-    @required int width,
-    @required int height,
+  factory MercatorViewport.fitBounds({
+    @required num width,
+    @required num height,
     @required List<num> bounds,
     double minExtent = 0,
     double maxZoom = 24,
@@ -72,7 +72,13 @@ class Viewport {
       offset: offset,
     );
 
-    return Viewport(width: width, height: height, lng: lngLatZoom['lng'], lat: lngLatZoom['lat'], zoom: lngLatZoom['zoom']);
+    return MercatorViewport(
+      width: width,
+      height: height,
+      lng: lngLatZoom['lng'],
+      lat: lngLatZoom['lat'],
+      zoom: lngLatZoom['zoom'],
+    );
   }
 
   /// Project [vector] to pixel coordinates.
@@ -86,11 +92,11 @@ class Viewport {
     return vector is Vector2 ? Vector2(coord[0], y) : Vector3(coord[0], y, coord[2]);
   }
 
-  ///  Unproject [xyz] coordinates onto world coordinates.
+  /// Unproject [xyz] coordinates onto world coordinates.
   Vector unproject(Vector xyz, {bool topLeft = true, double targetZ}) {
     assert(xyz is Vector2 || xyz is Vector3);
 
-    var vec, z;
+    dynamic vec, z;
     try {
       vec = xyz as Vector2;
       z = double.nan;
@@ -118,7 +124,7 @@ class Viewport {
   Vector3 projectPosition(Vector vector) {
     assert(vector is Vector2 || vector is Vector3 || vector is Vector4);
 
-    var vec;
+    dynamic vec;
     try {
       vec = vector as Vector2;
     } on CastError {
@@ -138,7 +144,7 @@ class Viewport {
   Vector3 unprojectPosition(Vector vector) {
     assert(vector is Vector2 || vector is Vector3 || vector is Vector4);
 
-    var vec;
+    dynamic vec;
     try {
       vec = vector as Vector2;
     } on CastError {
@@ -150,7 +156,7 @@ class Viewport {
     }
 
     final unprojection = unprojectFlat(vec[0], vec[1]);
-    final z = (vec is Vector3 || vec is Vector4 ? vec[2] : 0) / unitsPerMeter;
+    final dynamic z = (vec is Vector3 || vec is Vector4 ? vec[2] : 0) / unitsPerMeter;
 
     return Vector3(unprojection[0], unprojection[1], z);
   }
@@ -181,5 +187,5 @@ class Viewport {
   int get hashCode => quiver.hashObjects([width, height, viewMatrix, projMatrix]);
 
   @override
-  bool operator ==(Object other) => (other is Viewport) && (other.width == this.width && other.height == this.height && other.viewMatrix == this.viewMatrix);
+  bool operator ==(Object other) => (other is MercatorViewport) && (other.width == this.width && other.height == this.height && other.viewMatrix == this.viewMatrix);
 }

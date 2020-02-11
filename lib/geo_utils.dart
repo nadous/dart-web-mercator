@@ -88,7 +88,7 @@ double getMeterZoom(double lat) {
 }
 
 /// Calculate distance scales in meters around current [lat, lng], for both degrees and pixels.
-Map<String, List> getDistanceScales(lng, lat, {highPrecision = false}) {
+Map<String, List> getDistanceScales(double lng, double lat, {bool highPrecision = false}) {
   assert(lng.isFinite && lat.isFinite);
 
   final latCosine = cos(lat * degrees2Radians);
@@ -101,10 +101,10 @@ Map<String, List> getDistanceScales(lng, lat, {highPrecision = false}) {
   final altUnitsPerMeter = TILE_SIZE / EARTH_CIRCUMFERENCE / latCosine;
 
   final result = Map<String, List>();
-  result['unitsPerMeter'] = [altUnitsPerMeter, altUnitsPerMeter, altUnitsPerMeter];
-  result['metersPerUnit'] = [1 / altUnitsPerMeter, 1 / altUnitsPerMeter, 1 / altUnitsPerMeter];
-  result['unitsPerDegree'] = [unitsPerDegreeX, unitsPerDegreeY, altUnitsPerMeter];
-  result['degreesPerUnit'] = [1 / unitsPerDegreeX, 1 / unitsPerDegreeY, 1 / altUnitsPerMeter];
+  result['unitsPerMeter'] = <double>[altUnitsPerMeter, altUnitsPerMeter, altUnitsPerMeter];
+  result['metersPerUnit'] = <double>[1 / altUnitsPerMeter, 1 / altUnitsPerMeter, 1 / altUnitsPerMeter];
+  result['unitsPerDegree'] = <double>[unitsPerDegreeX, unitsPerDegreeY, altUnitsPerMeter];
+  result['degreesPerUnit'] = <double>[1 / unitsPerDegreeX, 1 / unitsPerDegreeY, 1 / altUnitsPerMeter];
 
   if (highPrecision) {
     final latCosine2 = (degrees2Radians * tan(lat * degrees2Radians)) / latCosine;
@@ -112,8 +112,8 @@ Map<String, List> getDistanceScales(lng, lat, {highPrecision = false}) {
     final altUnitsPerDegree2 = (TILE_SIZE / EARTH_CIRCUMFERENCE) * latCosine2;
     final altUnitsPerMeter2 = (altUnitsPerDegree2 / unitsPerDegreeY) * altUnitsPerMeter;
 
-    result['unitsPerDegree2'] = [0, unitsPerDegreeY2, altUnitsPerDegree2];
-    result['unitsPerMeter2'] = [altUnitsPerMeter2, 0, altUnitsPerMeter2];
+    result['unitsPerDegree2'] = <double>[.0, unitsPerDegreeY2, altUnitsPerDegree2];
+    result['unitsPerMeter2'] = <double>[altUnitsPerMeter2, .0, altUnitsPerMeter2];
   }
 
   return result;
@@ -162,14 +162,14 @@ Map<String, num> fitBounds({
   final west = bounds[0], south = bounds[1], east = bounds[2], north = bounds[3];
 
   if (padding is int) {
-    final p = padding;
+    final num p = padding;
     padding = {'top': p, 'right': p, 'bottom': p, 'left': p};
   } else {
     assert(padding is Map<String, num>);
     assert(padding['top'] is num && padding['right'] is num && padding['bottom'] is num && padding['left'] is num);
   }
 
-  final viewport = Viewport(width: width, height: height);
+  final viewport = MercatorViewport(width: width, height: height);
 
   final nw = viewport.project(Vector2(west, north)) as Vector2;
   final se = viewport.project(Vector2(east, south)) as Vector2;
@@ -192,8 +192,8 @@ Map<String, num> fitBounds({
   final scaleY = targetSize[1] / size[1];
 
   /// Find how much we need to shift the center
-  final offsetX = (padding['right'] - padding['left']) * .5 / scaleX;
-  final offsetY = (padding['bottom'] - padding['top']) * .5 / scaleY;
+  final double offsetX = (padding['right'] - padding['left']) * .5 / scaleX;
+  final double offsetY = (padding['bottom'] - padding['top']) * .5 / scaleY;
 
   final center = Vector3((se[0] + nw[0]) * .5 + offsetX, (se[1] + nw[1]) * .5 + offsetY, double.nan);
   final centerLngLat = viewport.unproject(center) as Vector3;

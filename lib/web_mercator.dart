@@ -8,4 +8,4 @@ import 'package:vector_math/vector_math_64.dart';
 
 part 'math_utils.dart';
 part 'geo_utils.dart';
-part 'viewport.dart';
+part 'mercator_viewport.dart';
