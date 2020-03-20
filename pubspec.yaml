@@ -1,6 +1,6 @@
 name: web_mercator
 description: Dart implementation of the uber @math.gl/web-mercator javascript module.
-version: 0.9.3
+version: 0.9.4
 homepage: https://github.com/nadous/dart-web-mercator
 
 environment:

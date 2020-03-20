@@ -19,3 +19,8 @@
 * Change the name of `Viewport` to `MercatorViewport` so it doesn't clash with the flutter's [Viewport](https://api.flutter.dev/flutter/widgets/Viewport-class.html) class.
 * Strongly typing some variables as suggested by dart linter.
 * Add an example.
+
+## [0.9.4] - 2020/03/20
+
+* Add a convenient `copyWith` factory to clone a viewport with parameters typically reflecting user interactions.
+* Update the example accordingly…

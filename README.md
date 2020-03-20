@@ -14,4 +14,4 @@ final viewport = MercatorViewport.fitBounds(width: deviceWidth, height: deviceHe
 
 With that viewport, you can now project coordinates passing a `Vector` to the `project` method. Using a `Vector2` will result in a flat projection (onto a sphere) while a `Vector3` will consider the z component as an altidude expressed in meters.
 
-The `example/` folder contains a sample app displaying the boudary of Martinique.
+The `example/` folder contains a sample app displaying the boudary of Martinique with interactive pitch, bearing & zoom touch interactions.
