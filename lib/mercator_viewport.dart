@@ -24,6 +24,7 @@ class MercatorViewport {
         this.height = max(1, height),
         unitsPerMeter = getDistanceScales(lng, lat)['unitsPerMeter'][2],
         center = lngLatToWorld(lng, lat) {
+
     viewMatrix = getViewMatrix(
       height: this.height,
       pitch: pitch,
@@ -80,6 +81,23 @@ class MercatorViewport {
       zoom: lngLatZoom['zoom'],
     );
   }
+
+  /// Convenient factory to clone a viewport with parameters typically reflecting user interactions.
+  factory MercatorViewport.copyWith(
+    MercatorViewport from, {
+    double pitch,
+    double bearing,
+    double zoom,
+  }) =>
+      MercatorViewport(
+        width: from.width,
+        height: from.height,
+        lng: from.lng,
+        lat: from.lat,
+        pitch: pitch ?? from.pitch,
+        bearing: bearing ?? from.bearing,
+        zoom: zoom ?? from.zoom,
+      );
 
   /// Project [vector] to pixel coordinates.
   Vector project(Vector vector, {bool topLeft = true}) {
@@ -170,8 +188,6 @@ class MercatorViewport {
     final fromLocation = pixelsToWorld(Vector3(pos[0], pos[1], double.nan), _pixelUnprojMatrix) as Vector2;
     final toLocation = lngLatToWorld(lngLat[0], lngLat[1]);
 
-    print('fromLocation: $fromLocation, toLocation: $toLocation');
-
     final translate = toLocation.clone();
     fromLocation.negate();
     translate.add(fromLocation);
@@ -179,7 +195,6 @@ class MercatorViewport {
     final newCenter = center.clone();
     newCenter.add(translate);
 
-    print('translate: $translate, newCenter: $newCenter');
     return worldToLngLat(newCenter[0], newCenter[1]);
   }
 
@@ -187,5 +202,11 @@ class MercatorViewport {
   int get hashCode => quiver.hashObjects([width, height, viewMatrix, projMatrix]);
 
   @override
-  bool operator ==(Object other) => (other is MercatorViewport) && (other.width == this.width && other.height == this.height && other.viewMatrix == this.viewMatrix);
+  bool operator ==(Object other) => other is MercatorViewport && other.hashCode == hashCode;
+
+  @override
+  String toString() => '''
+    width: $width, height: $height, lng: $lng, lat: $lat,
+    zoom: $zoom, pitch: $pitch, bearing: $bearing
+    ''';
 }
