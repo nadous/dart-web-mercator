@@ -24,3 +24,7 @@
 
 * Add a convenient `copyWith` factory to clone a viewport with parameters typically reflecting user interactions.
 * Update the example accordingly…
+
+## [0.9.4+1] - 2020/06/02
+
+* Cosmetic changes tackling analysis updates.

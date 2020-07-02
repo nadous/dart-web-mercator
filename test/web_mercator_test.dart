@@ -14,7 +14,7 @@ dynamic getDiff(Map<int, num> value, Map<int, num> baseValue, num scale) {
   final errorPixels = value.map((i, v) => MapEntry(i, ((v - baseValue[i]) * scale).abs()));
   final error = value.map((i, v) => (MapEntry(i, (v - baseValue[i]).abs() / min(v.abs(), baseValue[i].abs()))));
 
-  String message = 'off by (';
+  var message = 'off by (';
   message += errorPixels.values.map((d) => d.toStringAsFixed(3)).join(', ');
   message += ') pixels, (';
   message += error.values.map((d) => '${(d * 100).toStringAsFixed(3)}%').join(', ');
@@ -203,9 +203,6 @@ void main() {
           final pt = Vector3(destPt[0], destPt[1], delta);
           final result = addMetersToLngLat(Vector3(lng, lat, 0), Vector3.all(delta));
 
-          // print('comparing: $result with $pt');
-          // -122.37309574680621,37.79495261124374,5000,  with -122.37309604668772,37.794952343211726,5000  (from math.gl tests)
-          // -122.37309574680621,37.79495261124374,5000.0 with -122.37309604668772,37.79495234321173,5000.0 (this dart test)
           result.storage.asMap().forEach((i, v) => expect(v, closeTo(pt[i], 1e-6))); // 1e-7 won't do, maybe dart is rounding decimals…
         }
       }

@@ -118,7 +118,7 @@ class MercatorViewport {
     try {
       vec = xyz as Vector2;
       z = double.nan;
-    } on CastError {
+    } on TypeError {
       vec = xyz as Vector3;
       z = vec[2];
     }
@@ -145,10 +145,10 @@ class MercatorViewport {
     dynamic vec;
     try {
       vec = vector as Vector2;
-    } on CastError {
+    } on TypeError {
       try {
         vec = vector as Vector3;
-      } on CastError {
+      } on TypeError {
         vec = vector as Vector4;
       }
     }
@@ -165,10 +165,10 @@ class MercatorViewport {
     dynamic vec;
     try {
       vec = vector as Vector2;
-    } on CastError {
+    } on TypeError {
       try {
         vec = vector as Vector3;
-      } on CastError {
+      } on TypeError {
         vec = vector as Vector4;
       }
     }

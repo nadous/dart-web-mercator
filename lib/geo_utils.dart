@@ -37,7 +37,7 @@ Vector2 destination(double lng, double lat, {@required num distance, num bearing
 /// see: [https://github.com/Turfjs/turf/blob/master/packages/turf-bbox/index.ts](turf/bbox)
 List<double> bbox(List<List<double>> coordinates) {
   assert(coordinates != null);
-  List<double> result = [double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity];
+  var result = <double>[double.infinity, double.infinity, double.negativeInfinity, double.negativeInfinity];
 
   for (final coord in coordinates) {
     if (result[0] > coord[0]) {
@@ -100,7 +100,7 @@ Map<String, List> getDistanceScales(double lng, double lat, {bool highPrecision 
   /// Number of pixels occupied by one meter around current lat/lon:
   final altUnitsPerMeter = TILE_SIZE / EARTH_CIRCUMFERENCE / latCosine;
 
-  final result = Map<String, List>();
+  final result = <String, List>{};
   result['unitsPerMeter'] = <double>[altUnitsPerMeter, altUnitsPerMeter, altUnitsPerMeter];
   result['metersPerUnit'] = <double>[1 / altUnitsPerMeter, 1 / altUnitsPerMeter, 1 / altUnitsPerMeter];
   result['unitsPerDegree'] = <double>[unitsPerDegreeX, unitsPerDegreeY, altUnitsPerMeter];
